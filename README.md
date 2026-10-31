@@ -19,7 +19,7 @@ pip install -r requirements.txt
 uvicorn app:app --reload
 ```
 
-Put your key in .env.example. Run the tests with `python -m pytest -v`. There are 20 tests, and Gemini is mocked, so no key is needed.
+Copy `.env.example` to `.env` and put your key in `.env`. Run the tests with `python -m pytest -v`. There are 20 tests, and Gemini is mocked, so no key is needed.
 
 ## Evaluation
 
