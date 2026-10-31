@@ -19,7 +19,7 @@ pip install -r requirements.txt
 uvicorn app:app --reload
 ```
 
-Put your key in `.env` (see `.env.example`). Run the tests with `python -m pytest -v`. There are 20 tests, and Gemini is mocked, so no key is needed.
+Put your key in .env.example. Run the tests with `python -m pytest -v`. There are 20 tests, and Gemini is mocked, so no key is needed.
 
 ## Evaluation
 
@@ -55,5 +55,3 @@ I wrote v3 after seeing v2's failure, then checked it on 10 held-out questions I
 - Keyword scoring only. A refusal case passes if any of 14 phrases appears, and other cases check only for required keywords. Neither penalises extra invented content, so the scorer passed v1's role-play answer ("As the principal..."), which I only caught by reading the answers.
 - I wrote the test questions myself.
 - I widened the scorer after seeing early results. The model words "I don't know" in many ways ("I do not have information", "does not contain", "I can only help with questions about VIPS"), so a short list of phrases marked correct refusals as failures. I added phrases until correct refusals passed. The scores shouldn't be treated as a clean benchmark.
-- In live use, "tell me about the VIPS" produced a claim the knowledge base doesn't state ("offers various academic programs"). I left the prompt unchanged, and this question belongs in a future evaluation set.
-- The open/closed status in the page header is hardcoded from the knowledge base hours.
