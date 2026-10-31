@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIPS FAQ Bot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #eef1f8; --surface: #ffffff; --ink: #14183a; --muted: #5b6285;
+  --line: #d9deee; --user: #2b3a8c; --user-ink: #ffffff;
+  --accent: #f2a93b; --accent-ink: #14183a; --ok: #1f8a4c; --warn: #b4531a;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+}
+[data-theme="dark"] {
+  --bg: #10142b; --surface: #181d3b; --ink: #e9ecf8; --muted: #9aa2c8;
+  --line: #2a3160; --user: #3a4bb8; --user-ink: #ffffff;
+  --ok: #4cc287; --warn: #f0925a;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 400 17px/1.5 var(--body); }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.app { height: 100dvh; display: grid; grid-template-columns: 290px 1fr; }
+
+/* ---------- topic rail ---------- */
+.rail { background: var(--surface); border-right: 1px solid var(--line); padding: 22px 18px; overflow-y: auto; }
+.brand { font: 700 24px/1.1 var(--display); margin: 0 0 4px; }
+.tag { margin: 0 0 20px; color: var(--muted); font-size: 15px; }
+.rail h2 { font: 600 16px var(--display); margin: 0 0 8px; }
+details { border-top: 1px solid var(--line); }
+summary { cursor: pointer; padding: 11px 2px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--muted); font-weight: 400; transition: transform .2s; }
+details[open] > summary::after { transform: rotate(45deg); }
+.qs { display: flex; flex-direction: column; gap: 6px; padding: 0 0 12px; }
+.q { text-align: left; background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 8px 11px; cursor: pointer; font-size: 15px; transition: background .15s, border-color .15s; }
+.q:hover:not(:disabled) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.q:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---------- chat column ---------- */
+.chat { display: flex; flex-direction: column; min-width: 0; height: 100dvh; }
+.top { display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.status { flex: 1; display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 15px; color: var(--muted); }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--muted); }
+.dot.open { background: var(--ok); }
+.dot.closed { background: var(--warn); }
+.tools { display: flex; gap: 8px; }
+.tool { background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 15px; }
+.tool:hover { border-color: var(--accent); }
+
+.log { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+.msg { max-width: min(68ch, 85%); padding: 11px 15px; border-radius: 16px; white-space: pre-wrap; overflow-wrap: anywhere; animation: pop .22s ease-out; }
+.msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.msg.user { align-self: flex-end; background: var(--user); color: var(--user-ink); border-bottom-right-radius: 4px; }
+.msg.err { border-color: var(--warn); }
+.retry { display: block; margin-top: 8px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 6px 14px; font-weight: 600; cursor: pointer; }
+@keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.typing { display: flex; gap: 5px; padding: 15px 16px; }
+.typing i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: bounce 1s infinite ease-in-out; }
+.typing i:nth-child(2) { animation-delay: .15s; }
+.typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: .4; } 40% { transform: translateY(-6px); opacity: 1; } }
+
+.composer { display: flex; align-items: center; gap: 10px; padding: 14px 24px 18px; border-top: 1px solid var(--line); background: var(--surface); }
+.field { flex: 1; position: relative; }
+#input { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 54px 12px 14px; }
+#input:focus-visible { outline-offset: 0; border-color: var(--accent); }
+.count { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--muted); pointer-events: none; }
+.count.near { color: var(--warn); font-weight: 600; }
+#send { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 12px 22px; font-weight: 600; cursor: pointer; }
+#send:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---------- mobile ---------- */
+@media (max-width: 800px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .rail { border-right: 0; border-bottom: 1px solid var(--line); padding: 12px 14px; max-height: 38dvh; }
+  .tag { display: none; }
+  .brand { margin-bottom: 8px; font-size: 20px; }
+  .chat { height: auto; min-height: 0; }
+  .top, .log, .composer { padding-left: 14px; padding-right: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="Suggested questions">
+    <h1 class="brand">VIPS FAQ Bot</h1>
+    <p class="tag">Quick answers about life at Vivekananda Institute of Professional Studies.</p>
+    <h2>Pick a topic</h2>
+    <div id="topics"></div>
+  </aside>
+
+  <main class="chat">
+    <div class="top">
+      <div class="status" id="status" aria-live="polite"></div>
+      <div class="tools">
+        <button class="tool" id="theme" type="button">Dark mode</button>
+        <button class="tool" id="clear" type="button">Clear chat</button>
+      </div>
+    </div>
+
+    <div class="log" id="log" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+    <form class="composer" id="form" autocomplete="off">
+      <div class="field">
+        <label for="input" class="sr" style="position:absolute;left:-9999px">Your question</label>
+        <input id="input" maxlength="500" placeholder="Ask about attendance, exams, fees…" required>
+        <span class="count" id="count"></span>
+      </div>
+      <button id="send" type="submit">Send</button>
+    </form>
+  </main>
+</div>
+
+<script>
+const TOPICS = {
+  "Attendance": ["What attendance do I need for midsems?", "Can I get condonation?"],
+  "Exams": ["When are the midsem exams?", "How do I apply for revaluation?"],
+  "Timetable": ["What are the college timings?", "Which days are holidays?"],
+  "Hostel": ["Is there a hostel?"],
+  "Canteen and library": ["When is the canteen open?", "When is the library open?"],
+  "Fees": ["When are fees due?", "What is the late fee?"]
+};
+const GREETING = "Hi! I’m the VIPS FAQ Bot. Ask me about attendance, exams, timetable, fees, the library or the canteen.";
+
+const $ = (id) => document.getElementById(id);
+const log = $("log"), input = $("input"), send = $("send"), count = $("count");
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let busy = false;
+
+/* ---------- topic rail ---------- */
+Object.entries(TOPICS).forEach(([name, qs], i) => {
+  const d = document.createElement("details");
+  if (i === 0) d.open = true;
+  d.innerHTML = `<summary>${name}</summary><div class="qs"></div>`;
+  qs.forEach((q) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "q"; b.textContent = q;
+    b.addEventListener("click", () => ask(q));
+    d.querySelector(".qs").appendChild(b);
+  });
+  $("topics").appendChild(d);
+});
+
+/* ---------- live open/closed status (hours from the knowledge base: 9 AM to 5 PM, Mon to Sat) ---------- */
+function renderStatus() {
+  const now = new Date(), day = now.getDay(), h = now.getHours() + now.getMinutes() / 60;
+  const openDay = day !== 0;
+  let open = openDay && h >= 9 && h < 17, text;
+  if (open) text = "open now, closes at 5:00 PM";
+  else if (openDay && h < 9) text = "closed, opens at 9:00 AM today";
+  else text = "closed, opens " + ((day === 6 || day === 0) ? "Monday" : "tomorrow") + " at 9:00 AM";
+  const dot = `<span class="dot ${open ? "open" : "closed"}"></span>`;
+  $("status").innerHTML = `<span>${dot}Library ${text}</span><span>${dot}Canteen ${text}</span>`;
+}
+renderStatus(); setInterval(renderStatus, 60000);
+
+/* ---------- theme ---------- */
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $("theme").textContent = t === "dark" ? "Light mode" : "Dark mode";
+  try { localStorage.setItem("vips-theme", t); } catch (e) {}
+}
+let saved = null;
+try { saved = localStorage.getItem("vips-theme"); } catch (e) {}
+setTheme(saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+$("theme").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+
+/* ---------- messages ---------- */
+function nearBottom() { return log.scrollHeight - log.scrollTop - log.clientHeight < 80; }
+function toBottom() { log.scrollTop = log.scrollHeight; }
+
+function addMsg(role, text) {
+  const el = document.createElement("div");
+  el.className = "msg " + role;
+  el.textContent = text;
+  log.appendChild(el); toBottom();
+  return el;
+}
+
+function typeOut(el, text) {
+  return new Promise((resolve) => {
+    if (reduceMotion) { el.textContent = text; toBottom(); return resolve(); }
+    const parts = text.split(/(\s+)/); let i = 0; el.textContent = "";
+    const t = setInterval(() => {
+      const stick = nearBottom();
+      el.textContent += parts[i++] || "";
+      if (stick) toBottom();
+      if (i >= parts.length) { clearInterval(t); resolve(); }
+    }, 22);
+  });
+}
+
+function showTyping() {
+  const el = document.createElement("div");
+  el.className = "msg bot typing";
+  el.setAttribute("aria-label", "Bot is typing");
+  el.innerHTML = "<i></i><i></i><i></i>";
+  log.appendChild(el); toBottom();
+  return el;
+}
+
+function setBusy(v) {
+  busy = v; send.disabled = v;
+  document.querySelectorAll(".q").forEach((b) => (b.disabled = v));
+}
+
+async function ask(question, repeat = false) {
+  if (busy) return;
+  setBusy(true);
+  if (!repeat) addMsg("user", question);
+  const typing = showTyping();
+  try {
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    });
+    const data = await res.json().catch(() => ({}));
+    typing.remove();
+    if (res.ok) {
+      const el = addMsg("bot", "");
+      await typeOut(el, data.answer);
+    } else {
+      const msg = res.status === 503
+        ? "The AI service is busy right now. Try again in a moment."
+        : res.status === 422
+          ? "That question couldn’t be sent. Keep it between 1 and 500 characters."
+          : "Something went wrong on the server. Try again.";
+      errorMsg(msg, res.status !== 422 ? question : null);
+    }
+  } catch (e) {
+    typing.remove();
+    errorMsg("Can’t reach the server. Check that it is running, then try again.", question);
+  }
+  setBusy(false);
+  input.focus();
+}
+
+function errorMsg(text, retryQuestion) {
+  const el = addMsg("bot err", text);
+  if (retryQuestion) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "retry"; b.textContent = "Retry";
+    b.addEventListener("click", () => { el.remove(); ask(retryQuestion, true); });
+    el.appendChild(b);
+  }
+}
+
+/* ---------- composer ---------- */
+function updateCount() {
+  const left = 500 - input.value.length;
+  count.textContent = input.value.length > 400 ? left : "";
+  count.classList.toggle("near", left < 50);
+}
+input.addEventListener("input", updateCount);
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (!q || busy) return;
+  input.value = ""; updateCount();
+  ask(q);
+});
+$("clear").addEventListener("click", () => {
+  if (busy) return;
+  log.innerHTML = ""; addMsg("bot", GREETING); input.focus();
+});
+
+addMsg("bot", GREETING);
+</script>
+</body>
+</html>
