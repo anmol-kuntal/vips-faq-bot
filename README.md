@@ -2,7 +2,7 @@
 
 A chatbot that answers student questions about Vivekananda Institute of Professional Studies (VIPS) using a fixed knowledge base. It covers attendance, exams, timetable, hostel, canteen, library and fees, and says so when it doesn't have the information.
 
-**Live demo:** [add link after deployment]
+**Live demo:** https://vips-faq-bot.onrender.com
 
 ## Model and design
 
